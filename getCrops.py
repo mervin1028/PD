@@ -8,8 +8,7 @@ from firebase import firebase
 arduino = serial.Serial('COM10', 9600, timeout=.1)
 
 firebaseDb = firebase.FirebaseApplication('https://hvccare-5b4bc.firebaseio.com/')
-now = datetime.datetime.today()
-date = ""+str(now.month)+"-"+str(now.day)+"-"+str(now.year)+" "+str(now.hour)+":"+str(now.minute)+":"+str(now.second)
+now = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
 
 config = {
@@ -60,7 +59,7 @@ humiditySensor = 0.0
 
 every = 0
 def set_database():
-    val = firebaseDb.put('Realtime_Data',date,{'Date':date,'Measured_Temp_C':str(tempSensor),'Measured_Humidity':str(humiditySensor),'Measured_PHLevel':str(phSensor)})
+    val = firebaseDb.put('Realtime_Data',now,{'Date':now,'Measured_Temp_C':str(tempSensor),'Measured_Humidity':str(humiditySensor),'Measured_PHLevel':str(phSensor)})
     
 
 while True:
