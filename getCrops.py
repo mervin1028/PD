@@ -59,6 +59,8 @@ phSensor = 0.0
 humiditySensor = 0.0
 
 every = 0
+reference = datetime.datetime.today()
+
 def set_database():
     now = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
     year_now = datetime.datetime.today().strftime("%Y")
@@ -66,62 +68,54 @@ def set_database():
     day_now = datetime.datetime.today().strftime("%d")
     date_now = datetime.datetime.today().strftime("%Y-%m-%d")    
     date_name = datetime.datetime.today().strftime("%B %d, %Y")
-    
+    time_now = datetime.datetime.today().strftime("%H:%M:%S")
 
-    
-    result = db.child("Realtime_Data").child(year_now).child(month_now).child(day_now).child(date_now).child(now).set({'Date':now,'Date_Complete':date_name,'Measured_Temp_C':19,'Measured_Humidity':70,'Measured_PHLevel': 7})
-    
+    result = db.child("Realtime_Data").child(year_now).child(month_now).child(day_now).child(date_now).child(now).set({'Date':now,'Time':time_now,'Date_Complete':date_name,'Measured_Temp_C':tempSensor,'Measured_Humidity':humiditySensor,'Measured_PHLevel': phSensor})
+    print(result)
 
 while True:
-    data = arduino.readline().decode().strip()
+    try:
+        data = arduino.readline().decode().strip()
+        
+        splitData = data.split()
+        print(splitData)
+        
+        firebase = pyrebase.initialize_app(config)
 
-    splitData = data.split()
-
-    
-    config = {
-        "apiKey" : "AIzaSyCfOVS4fKzugZEv2o26Ir8rjkH2XwayfJo",
-        "authDomain" : "hvccare-5b4bc.firebaseapp.com",
-        "databaseURL" : "https://hvccare-5b4bc.firebaseio.com",
-        "projectId" : "hvccare-5b4bc",
-        "storageBucket": "hvccare-5b4bc.appspot.com",
-        "messagingSenderId": "706149028538"
-    }
-
-    firebase = pyrebase.initialize_app(config)
-
-    db = firebase.database()
-    
-
-    if splitData:
-        tempSensor = float(splitData[0])
-        phSensor = float(splitData[1])
-        humiditySensor = float(splitData[2])
+        db = firebase.database()
         
 
-    
-    if every == 1800:
-        set_database()
-        every = 0
-    every = every + 1
-    
-    db.child("Sensor_Data").update({"Measured_PhLevel": str(phSensor) })
-    db.child("Sensor_Data").update({"Measured_Temperature": str(tempSensor) })
-    db.child("Sensor_Data").update({"Measured_Humidity": str(humiditySensor) })
+        if splitData:
+            tempSensor = float(splitData[0])
+            phSensor = float(splitData[1])
+            humiditySensor = float(splitData[2])
+            
 
-    
-    #print(median_temp-0.5)
-    if  tempSensor <= (median_temp-0.5):
-        #TurnOff Peltier
-        arduino.write('A'.encode())
-    elif tempSensor >= (median_temp+1):
-        #TurnOn Peltier
-        arduino.write('B'.encode())
-    elif phSensor <= (median_phlevel-0.5):
-        #PhUp TurnedOn
-        arduino.write('C'.encode())
-    elif phSensor >= (median_phlevel+5):
-        #PhDown TurnedOn
-        arduino.write('D'.encode())
-    
-    time.sleep(1)
+        
+
+        if reference <= (datetime.datetime.now() - datetime.timedelta(minutes = 30)):
+            set_database()
+            reference = datetime.datetime.today()
+        
+            
+        db.child("Sensor_Data").update({"Measured_PhLevel": str(phSensor) })
+        db.child("Sensor_Data").update({"Measured_Temperature": str(tempSensor) })
+        db.child("Sensor_Data").update({"Measured_Humidity": str(humiditySensor) })
+
+        
+        #print(median_temp-0.5)
+        if  tempSensor <= (median_temp-0.5):
+            #TurnOff Peltier
+            arduino.write('A'.encode())
+        elif tempSensor >= (median_temp+1):
+            #TurnOn Peltier
+            arduino.write('B'.encode())
+        elif phSensor <= (median_phlevel-0.5):
+            #PhUp TurnedOn
+            arduino.write('C'.encode())
+        elif phSensor >= (median_phlevel+5):
+            #PhDown TurnedOn
+            arduino.write('D'.encode())
+    except BaseException as error:
+        print('An exception occurred: {}'.format(error))        
 

@@ -81,15 +81,6 @@ export class MonitorPage {
                     datem = date.key;
                     console.log(datem);
 
-                    this.firebaseDb.list('Realtime_Data/'+year+'/'+month+'/'+day+'/'+datem, ref => ref.limitToLast(5)).snapshotChanges().map(getactions =>{
-                      this.timeStamp = [];
-                      return getactions.map(action => ({ key: action.key, ...action.payload.val()}));
-                    }).subscribe(getDates => {
-                      getDates.map(date => {
-                        this.timeStamp.push(date.key);
-                        
-                      });
-                    });
                     this.firebaseDb.list('Realtime_Data/'+year+'/'+month+'/'+day+'/'+datem, ref => ref.limitToLast(1)).valueChanges().subscribe(snapshots=>{
                       this.dates = [];
                       this.result = snapshots;
@@ -97,11 +88,13 @@ export class MonitorPage {
                         this.dates.push(key.Date_Complete);
                       });
                     });
-                    this.firebaseDb.list('Realtime_Data/'+year+'/'+month+'/'+day+'/'+datem, ref => ref.limitToLast(5)).valueChanges().subscribe(snapshots=>{
+                    this.firebaseDb.list('Realtime_Data/'+year+'/'+month+'/'+day+'/'+datem, ref => ref.limitToLast(10)).valueChanges().subscribe(snapshots=>{
                       this.valueTemp = [];
+                      this.timeStamp = [];
                       this.result = snapshots;
                       this.result.map(key => {
                         this.valueTemp.push(key.Measured_Temp_C);
+                        this.timeStamp.push(key.Time);
                       });
                     });
 
